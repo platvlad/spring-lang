@@ -10,7 +10,7 @@ namespace JetBrains.ReSharper.Plugins.Spring
     {
         public override SyntaxHighlightingProcessor CreateProcessor()
         {
-            return new SpringSyntaxHighlightingProcessor();
+            return new SyntaxHighlightingProcessor();
         }
     }
 

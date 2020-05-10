@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Antlr4.Runtime;
 using ICSharpCode.NRefactory.CSharp;
 using JetBrains.Application.Settings;
 using JetBrains.DocumentModel;
@@ -36,11 +37,21 @@ namespace JetBrains.ReSharper.Plugins.Spring
         {
             using (var def = Lifetime.Define())
             {
-                var builder = new PsiBuilder(myLexer, SpringFileNodeType.Instance, new TokenFactory(), def.Lifetime);
+                var builder = new PsiBuilder(new CILexer(myLexer.Buffer), SpringFileNodeType.Instance, new TokenFactory(), def.Lifetime);
+
+                string inputText = myLexer.Buffer.GetText();
+                var tokenStream = new CommonTokenStream(new CLexer(new AntlrInputStream(inputText)));
+                CParser cParser = new CParser(tokenStream);
+                cParser.AddErrorListener(new ParserErrorListener(builder));
+                var visitor = new BuilderVisitor(builder);
+
                 var fileMark = builder.Mark();
+                
+                CParser.CompilationUnitContext fileContext = cParser.compilationUnit();
+                visitor.Visit(fileContext);
 
-                ParseBlock(builder);
-
+                //ParseBlock(builder);
+                //builder.ResetCurrentLexeme(visitor.MaxTokenIndexConsumed, visitor.MaxTokenIndexConsumed);
                 builder.Done(fileMark, SpringFileNodeType.Instance, null);
                 var file = (IFile)builder.BuildTree();
                 return file;
@@ -52,20 +63,20 @@ namespace JetBrains.ReSharper.Plugins.Spring
             while (!builder.Eof())
             {
                 var tt = builder.GetTokenType();
-                if (tt == CSharpTokenType.LBRACE)
+                if (tt == SpringTokenType.LeftBrace)
                 {
                     var start = builder.Mark();
                     builder.AdvanceLexer();
                     ParseBlock(builder);
-
-                    if (builder.GetTokenType() != CSharpTokenType.RBRACE)
+            
+                    if (builder.GetTokenType() != SpringTokenType.RightBrace)
                         builder.Error("Expected '}'");
                     else
                         builder.AdvanceLexer();
                     
                     builder.Done(start, SpringCompositeNodeType.BLOCK, null);
                 }
-                else if (tt == CSharpTokenType.RBRACE)
+                else if (tt == SpringTokenType.RightBrace)
                     return;
                 else builder.AdvanceLexer();
                 
@@ -96,9 +107,10 @@ namespace JetBrains.ReSharper.Plugins.Spring
                 var highlightings = new List<HighlightingInfo>();
                 foreach (var treeNode in myFile.Descendants())
                 {
-                    if (treeNode is PsiBuilderErrorElement error)
+                    //if (treeNode is PsiBuilderErrorElement error)
+                    if (treeNode is SpringErrorElement error)
                     {
-                        var range = error.GetDocumentRange();
+                        var range = error.GetDocumentRange().ExtendRight(error.length);
                         highlightings.Add(new HighlightingInfo(range, new CSharpSyntaxError(error.ErrorDescription, range)));
                     }
                 }

@@ -53,7 +53,8 @@ namespace JetBrains.ReSharper.Plugins.Spring
     {
       public ILexer CreateLexer(IBuffer buffer)
       {
-        return new CSharpLexer(buffer);
+        //return new CSharpLexer(buffer);
+        return new CILexer(buffer);
       }
     }
   }

@@ -17,16 +17,6 @@ namespace JetBrains.ReSharper.Plugins.Spring
             ICharStream iCharStream = new AntlrInputStream(buffer.GetText());
             antlrLexer = new CLexer(iCharStream);
             IList<IToken> tokens = antlrLexer.GetAllTokens();
-            using (System.IO.StreamWriter file =
-                new System.IO.StreamWriter(@"C:\MyProjects\repo\dotNet\spring-lang-master\Spring\src\Spring\log.txt"))
-            {
-                foreach (IToken token in tokens)
-                {
-                    file.Write(token.Text + ' ');
-                    file.Write(token.StartIndex.ToString() + ' ');
-                    file.Write(token.StopIndex.ToString() + " \n");
-                }
-            }
 
             CurrentPosition = 0;
         }
@@ -35,7 +25,6 @@ namespace JetBrains.ReSharper.Plugins.Spring
         {
             IToken token = antlrLexer.NextToken();
             int tokenId = token.Type;
-            // what if token.Type == 0?
             if (tokenId < 0)
             {
                 TokenType = null;

@@ -60,9 +60,9 @@ namespace JetBrains.ReSharper.Plugins.Spring
             if (message is CParser.DirectDeclaratorContext ddContext)
             {
                 return new SpringVariableDeclarationElement(ddContext);
-            } else if (message is CParser.PrimaryExpressionContext peContext)
+            } else if (message is ITerminalNode terminalNode)
             {
-                return new SpringVariableReferenceElement(peContext);
+                return new SpringVariableReferenceElement(terminalNode);
             }
             else
             {
@@ -116,6 +116,12 @@ namespace JetBrains.ReSharper.Plugins.Spring
         public SpringVariableDeclarationElement(CParser.DirectDeclaratorContext ctx)
         {
             context = ctx;
+            var ctxIdentifier = ctx.Identifier();
+            if (ctxIdentifier != null)
+            {
+                name = ctxIdentifier.GetText();
+            }
+            DeclaredElement = new CVariableDeclared(this);
         }
 
         public override PsiLanguageType Language => SpringLanguage.Instance;
@@ -124,7 +130,13 @@ namespace JetBrains.ReSharper.Plugins.Spring
 
         public IDeclaredElement DeclaredElement { get; }
 
-        public string DeclaredName { get; }
+        public string DeclaredName
+        {
+            get
+            {
+                return name;
+            }
+        }
 
         public TreeTextRange GetNameRange()
         {
@@ -143,10 +155,10 @@ namespace JetBrains.ReSharper.Plugins.Spring
 
     public class SpringVariableReferenceElement : CompositeElement
     {
-        public CParser.PrimaryExpressionContext context;
-        public SpringVariableReferenceElement(CParser.PrimaryExpressionContext ctx)
+        //public CParser.PrimaryExpressionContext context;
+        public SpringVariableReferenceElement(ITerminalNode terminalNode)
         {
-            context = ctx;
+            //context = ctx;
         }
 
         public override NodeType NodeType => SpringCompositeNodeWithArgumentType.VAR_REFERENCE;

@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using JetBrains.ReSharper.Psi.Parsing;
 using JetBrains.ReSharper.Psi.TreeBuilder;
@@ -31,6 +32,7 @@ namespace JetBrains.ReSharper.Plugins.Spring
                    resharperTokenType == SpringTokenType.PragmaDirective)
             {
                 Builder.AdvanceLexer();
+                
                 resharperTokenType = Builder.GetTokenType();
                 if (resharperTokenType == null)
                     return null;
@@ -41,12 +43,15 @@ namespace JetBrains.ReSharper.Plugins.Spring
         
         public override object VisitTerminal(ITerminalNode node)
         {
-            
-            if (skipWhitespaces() == null)
+            var resharperTokenType = skipWhitespaces();
+            if (resharperTokenType == null)
             {
                 return null;
             }
-            if (node.GetType() == SpringTokenType.Identifier.GetType())
+
+            IToken antlrToken = node.Symbol;
+
+            if (antlrToken.Type == SpringTokenType.Identifier.Index)
             {
                 var mark = Builder.Mark();
                 var tokenNodeType = Builder.AdvanceLexer();
@@ -61,27 +66,14 @@ namespace JetBrains.ReSharper.Plugins.Spring
 
         public override object VisitDirectDeclarator(CParser.DirectDeclaratorContext context)
         {
+            skipWhitespaces();
             var mark = Builder.Mark();
 
             VisitChildren(context);
             Builder.Done(mark, SpringCompositeNodeWithArgumentType.VAR_DECLARATION, context);
             return null;
-            //return base.VisitDeclarator(context);
         }
 
-        public override object VisitPrimaryExpression(CParser.PrimaryExpressionContext context)
-        {
-            if (context.Identifier() != null)
-            {
-                var mark = Builder.Mark();
-                VisitChildren(context);
-                Builder.Done(mark, SpringCompositeNodeWithArgumentType.VAR_REFERENCE, context);
-            }
-            else
-            {
-                VisitChildren(context);
-            }
-            return null;
-        }
+
     }
 }

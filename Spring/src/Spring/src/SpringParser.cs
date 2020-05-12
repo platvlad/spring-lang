@@ -50,8 +50,6 @@ namespace JetBrains.ReSharper.Plugins.Spring
                 CParser.CompilationUnitContext fileContext = cParser.compilationUnit();
                 visitor.Visit(fileContext);
 
-                //ParseBlock(builder);
-                //builder.ResetCurrentLexeme(visitor.MaxTokenIndexConsumed, visitor.MaxTokenIndexConsumed);
                 builder.Done(fileMark, SpringFileNodeType.Instance, null);
                 var file = (IFile)builder.BuildTree();
                 return file;
